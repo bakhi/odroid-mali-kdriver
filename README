@@ -1,0 +1,2 @@
+The source includes ODROID-N2 Mali Bifrost GPU kernel driver, which extracted from kernel source tree at https://github.com/hardkernel/linux.
+The version is r7p0 released on 10th July 2017, which is old compared to the most recent one r28p0 (2nd December 2020)
