@@ -48,6 +48,15 @@
 #include <linux/file.h>
 #include <linux/sizes.h>
 
+/*************************************************************************/
+/* jin: add config here */
+/* You can change the kernel config in the Kbuild */
+
+#include "tgx/tzgpu_defs.h"
+
+/*************************************************************************/
+
+
 #ifdef CONFIG_MALI_FPGA_BUS_LOGGER
 #include <linux/bus_logger.h>
 #endif
@@ -280,6 +289,10 @@ struct kbase_jd_atom_dependency {
 struct kbase_io_access {
 	uintptr_t addr;
 	u32 value;
+#ifdef JIN_IO_HISTORY
+	u64 timestamp;
+	u32 thread_id;
+#endif
 };
 
 /**
@@ -931,6 +944,9 @@ enum kbase_trace_code {
  */
 struct kbase_trace {
 	struct timespec timestamp;
+#ifdef JIN_DUMP_TRACE
+	u64 ts;
+#endif
 	u32 thread_id;
 	u32 cpu;
 	void *ctx;
@@ -2150,6 +2166,10 @@ struct kbase_context {
 
 	int priority;
 	s16 atoms_count[KBASE_JS_ATOM_SCHED_PRIO_COUNT];
+
+#ifdef CONFIG_TGX
+	struct tgx_context *tgx_ctx;
+#endif
 };
 
 #ifdef CONFIG_MALI_JOB_DUMP

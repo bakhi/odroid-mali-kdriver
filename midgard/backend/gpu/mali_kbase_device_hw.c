@@ -32,6 +32,15 @@
 
 #if !defined(CONFIG_MALI_NO_MALI)
 
+/***************** jin ***********************/
+#ifdef JIN_IO_HISTORY
+#include <linux/timer.h>
+
+/* The number of nanoseconds in a second. */
+#define NSECS_IN_SEC       1000000000ull /* ns */
+#endif  // JIN_IO_HISTORY                        
+
+/*********************************************/
 
 #ifdef CONFIG_DEBUG_FS
 
@@ -106,12 +115,22 @@ static void kbase_io_history_add(struct kbase_io_history *h,
 {
 	struct kbase_io_access *io;
 	unsigned long flags;
+#ifdef JIN_IO_HISTORY
+	struct timespec ts;
+#endif // JIN_IO_HISTORY
 
 	spin_lock_irqsave(&h->lock, flags);
 
 	io = &h->buf[h->count % h->size];
 	io->addr = (uintptr_t)addr | write;
 	io->value = value;
+
+#ifdef JIN_IO_HISTORY
+	getrawmonotonic(&ts);
+	io->timestamp = (u64)ts.tv_sec * NSECS_IN_SEC + ts.tv_nsec;
+	io->thread_id = task_pid_nr(current);
+#endif // JIN_IO_HISTORY
+
 	++h->count;
 	/* If count overflows, move the index by the buffer size so the entire
 	 * buffer will still be dumped later */

@@ -33,6 +33,11 @@
 #include "mali_kbase_pm_ca_random.h"
 #endif
 
+/* FIXME jin: it is also defined at tzgpu_defs.h */
+#ifndef CONFIG_MALI_DEBUG
+#define CONFIG_MALI_DEBUG
+#endif
+
 #include "mali_kbase_pm_always_on.h"
 #include "mali_kbase_pm_coarse_demand.h"
 #include "mali_kbase_pm_demand.h"

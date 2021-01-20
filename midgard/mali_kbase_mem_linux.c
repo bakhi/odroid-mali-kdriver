@@ -51,6 +51,10 @@
 #include <mali_kbase_tlstream.h>
 #include <mali_kbase_ioctl.h>
 
+#ifdef CONFIG_TGX
+#include "tgx/tgx_defs.h"
+#endif
+
 static int kbase_tracking_page_setup(struct kbase_context *kctx, struct vm_area_struct *vma);
 
 struct kbase_va_region *kbase_mem_alloc(struct kbase_context *kctx,
@@ -1498,6 +1502,9 @@ static int kbase_cpu_vm_fault(struct vm_fault *vmf)
 	pgoff_t rel_pgoff;
 	size_t i;
 	pgoff_t addr;
+#ifdef CONFIG_TGX
+	struct tgx_context *tgx_ctx = map->kctx->tgx_ctx;
+#endif
 
 	KBASE_DEBUG_ASSERT(map);
 	KBASE_DEBUG_ASSERT(map->count > 0);
@@ -1513,6 +1520,13 @@ static int kbase_cpu_vm_fault(struct vm_fault *vmf)
 	/* Fault on access to DONT_NEED regions */
 	if (map->alloc->reg && (map->alloc->reg->flags & KBASE_REG_DONT_NEED))
 		goto locked_bad_fault;
+
+#ifdef CONFIG_TGX
+	if (tgx_ctx) {
+//      EE("kctx : %p, tgx_ctx : %p", (void *)map->kctx, (void *)tgx_ctx);
+		tgx_as_add_valid(tgx_ctx, vma, map->alloc->nents);
+	}
+#endif
 
 	/* insert all valid pages from the fault location */
 	i = rel_pgoff;
@@ -1875,6 +1889,9 @@ int kbase_mmap(struct file *file, struct vm_area_struct *vma)
 	int free_on_close = 0;
 	struct device *dev = kctx->kbdev->dev;
 	size_t aligned_offset = 0;
+#ifdef CONFIG_TGX
+	struct tgx_context *tgx_ctx = kctx->tgx_ctx;
+#endif
 
 	dev_dbg(dev, "kbase_mmap\n");
 
@@ -2004,6 +2021,12 @@ int kbase_mmap(struct file *file, struct vm_area_struct *vma)
 		 * the pages, so we can now free the kernel mapping */
 		vfree(kaddr);
 	}
+
+#ifdef CONFIG_TGX
+	if (tgx_ctx) {
+		tgx_as_add(tgx_ctx, vma, reg);
+	}
+#endif
 
 out_unlock:
 	kbase_gpu_vm_unlock(kctx);

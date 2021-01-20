@@ -26,6 +26,10 @@
 
 #include <linux/interrupt.h>
 
+#ifdef CONFIG_TGX
+#include "tgx/tzgpu_defs.h"
+#endif
+
 #if !defined(CONFIG_MALI_NO_MALI)
 
 /* GPU IRQ Tags */

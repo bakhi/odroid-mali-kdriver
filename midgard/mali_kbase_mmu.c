@@ -50,6 +50,10 @@
 
 #define KBASE_MMU_PAGE_ENTRIES 512
 
+#ifdef CONFIG_TGX
+#include "tgx/tgx_defs.h"
+#endif
+
 /**
  * kbase_mmu_flush_invalidate() - Flush and invalidate the GPU caches.
  * @kctx: The KBase context.
@@ -711,6 +715,9 @@ phys_addr_t kbase_mmu_alloc_pgd(struct kbase_context *kctx)
 		goto alloc_free;
 
 	kbase_process_page_usage_inc(kctx, 1);
+#ifdef CONFIG_TGX
+	atomic_inc(&kctx->tgx_ctx->tmmu.pgt_nr_pages);
+#endif
 
 	for (i = 0; i < KBASE_MMU_PAGE_ENTRIES; i++)
 		kctx->kbdev->mmu_mode->entry_invalidate(&page[i]);
@@ -1649,6 +1656,10 @@ int kbase_mmu_init(struct kbase_context *kctx)
 	if (NULL == kctx->mmu_teardown_pages)
 		return -ENOMEM;
 
+#ifdef CONFIG_TGX
+	kctx->tgx_ctx->tmmu.pgd = kctx->pgd;
+#endif // CONFIG_TGX
+
 	return 0;
 }
 
@@ -1737,6 +1748,14 @@ static size_t kbasep_mmu_dump_level(struct kbase_context *kctx, phys_addr_t pgd,
 
 	return size;
 }
+
+#ifdef CONFIG_TGX
+size_t tgx_mmu_dump_level(struct kbase_context *kctx, phys_addr_t pgd,
+		int level, char ** const buffer, size_t *size_left)
+{
+	return kbasep_mmu_dump_level(kctx, pgd, level, buffer, size_left);
+}
+#endif
 
 void *kbase_mmu_dump(struct kbase_context *kctx, int nr_pages)
 {

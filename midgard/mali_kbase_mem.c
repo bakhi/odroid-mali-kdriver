@@ -42,6 +42,10 @@
 #include <mali_kbase_hw.h>
 #include <mali_kbase_tlstream.h>
 
+#ifdef CONFIG_TGX
+#include "tgx/tgx_defs.h"
+#endif
+
 /* This function finds out which RB tree the given GPU VA region belongs to
  * based on the region zone */
 static struct rb_root *kbase_reg_flags_to_rbtree(struct kbase_context *kctx,
@@ -1296,6 +1300,28 @@ static int kbase_do_syncset(struct kbase_context *kctx,
 				gpu_pa[page_off + page_count - 1], 0, sz,
 				sync_fn);
 	}
+
+	/* jin: here is the point that can recognize in/output address space.
+	 *		input: should be synced from CPU cache when userspace copies data to the mem
+	 *				as will be used by GPU later
+	 *		output: will be synced from GPU cache when userspace touches data.
+	 */
+#ifdef CONFIG_TGX
+	if (reg->cpu_alloc == reg->gpu_alloc) {
+		tgx_as_add_sync(kctx->tgx_ctx, sset, (page_off << PAGE_SHIFT) + offset);
+		/** EE("vm_start: 0x%llx, vm_end: 0x%llx, size: %lu", fault_vm_start, fault_vm_end, sync_size); */
+		/** EE("cpu_pa_start: 0x%llx cpu_pa_offset: 0x%llx", as_phys_addr_t(cpu_pa[0]), as_phys_addr_t(cpu_pa[page_off])); */
+		EE("[%d] reg_start_pfn: %llx, fault_addr: %llx, cpu_pa: %llx offset: %llu, page count: %llu page_off: %llu size: %lu", \
+				sync_fn, reg->start_pfn, sset->user_addr, as_phys_addr_t(cpu_pa[page_off]), offset, page_count, page_off, size); 
+		for (i = 0; i < 1; i++) {
+			void *mapped_page = kmap(as_page(cpu_pa[page_off + i]));
+			hex_dump(mapped_page + offset, 256);
+			kunmap(as_page(cpu_pa[page_off]));
+		}
+	} else {
+		/** TODO remain this for later as we currently assume that cpu vaddr = gpu avddr */
+	}
+#endif
 
 out_unlock:
 	kbase_gpu_vm_unlock(kctx);

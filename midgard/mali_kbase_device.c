@@ -41,6 +41,11 @@
 
 #include <mali_kbase_profiling_gator_api.h>
 
+#ifdef JIN_DUMP_TRACE
+/* The number of nanoseconds in a seconds. */
+#define NSECS_IN_SEC	1000000000ull /* ns */
+#endif
+
 /* NOTE: Magic - 0x45435254 (TRCE in ASCII).
  * Supports tracing feature provided in the base module.
  * Please keep it in sync with the value of base module.
@@ -398,8 +403,15 @@ static void kbasep_trace_format_msg(struct kbase_trace *trace_msg, char *buffer,
 {
 	s32 written = 0;
 
+#ifdef JIN_DUMP_TRACE
+	written += MAX(snprintf(buffer + written, MAX(len - written, 0), "[%5llu] ", trace_msg->ts), 0);
+
+	/* Initial part of message */
+	written += MAX(snprintf(buffer + written, MAX(len - written, 0), "%s,%p,", kbasep_trace_code_string[trace_msg->code], trace_msg->ctx), 0);
+#else
 	/* Initial part of message */
 	written += MAX(snprintf(buffer + written, MAX(len - written, 0), "%d.%.6d,%d,%d,%s,%p,", (int)trace_msg->timestamp.tv_sec, (int)(trace_msg->timestamp.tv_nsec / 1000), trace_msg->thread_id, trace_msg->cpu, kbasep_trace_code_string[trace_msg->code], trace_msg->ctx), 0);
+#endif
 
 	if (trace_msg->katom)
 		written += MAX(snprintf(buffer + written, MAX(len - written, 0), "atom %d (ud: 0x%llx 0x%llx)", trace_msg->atom_number, trace_msg->atom_udata[0], trace_msg->atom_udata[1]), 0);
@@ -429,6 +441,9 @@ static void kbasep_trace_dump_msg(struct kbase_device *kbdev, struct kbase_trace
 
 	kbasep_trace_format_msg(trace_msg, buffer, DEBUG_MESSAGE_SIZE);
 	dev_dbg(kbdev->dev, "%s", buffer);
+#ifdef JIN_DUMP_TRACE
+	EE("%s", buffer);
+#endif
 }
 
 void kbasep_trace_add(struct kbase_device *kbdev, enum kbase_trace_code code, void *ctx, struct kbase_jd_atom *katom, u64 gpu_addr, u8 flags, int refcount, int jobslot, unsigned long info_val)
@@ -438,13 +453,19 @@ void kbasep_trace_add(struct kbase_device *kbdev, enum kbase_trace_code code, vo
 
 	spin_lock_irqsave(&kbdev->trace_lock, irqflags);
 
+	// jin: buffer size is KBASE_TRACE_SIZE (256 entries)
 	trace_msg = &kbdev->trace_rbuf[kbdev->trace_next_in];
 
 	/* Fill the message */
 	trace_msg->thread_id = task_pid_nr(current);
 	trace_msg->cpu = task_cpu(current);
 
+#ifdef JIN_DUMP_TRACE
+	getrawmonotonic(&trace_msg->timestamp);
+	trace_msg->ts = (u64)trace_msg->timestamp.tv_sec * NSECS_IN_SEC + trace_msg->timestamp.tv_nsec;
+#else
 	getnstimeofday(&trace_msg->timestamp);
+#endif
 
 	trace_msg->code = code;
 	trace_msg->ctx = ctx;
@@ -490,6 +511,9 @@ void kbasep_trace_dump(struct kbase_device *kbdev)
 	u32 end;
 
 	dev_dbg(kbdev->dev, "Dumping trace:\nsecs,nthread,cpu,code,ctx,katom,gpu_addr,jobslot,refcount,info_val");
+#ifdef JIN_DUMP_TRACE
+	EE("Dumping trace:\nsecs,nthread,cpu,code,ctx,katom,gpu_addr,jobslot,refcount,info_val");       // jin
+#endif
 	spin_lock_irqsave(&kbdev->trace_lock, flags);
 	start = kbdev->trace_first_out;
 	end = kbdev->trace_next_in;

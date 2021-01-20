@@ -93,6 +93,10 @@
 
 #include <mali_kbase_as_fault_debugfs.h>
 
+#ifdef CONFIG_TGX
+#include "tgx/tgx_defs.h"
+#endif
+
 /* GPU IRQ Tags */
 #define	JOB_IRQ_TAG	0
 #define MMU_IRQ_TAG	1
@@ -537,6 +541,13 @@ static int kbase_api_set_flags(struct kbase_context *kctx,
 static int kbase_api_job_submit(struct kbase_context *kctx,
 		struct kbase_ioctl_job_submit *submit)
 {
+#ifdef CONFIG_TGX
+	if (kctx->tgx_ctx) {
+		tgx_dump_mc(kctx->tgx_ctx, TGX_AS_TYPE_ALL_WO_COMPUTE_JOB);
+		tgx_print_as(kctx->tgx_ctx, 0);
+	}
+#endif
+
 	return kbase_jd_submit(kctx, u64_to_user_ptr(submit->addr),
 			submit->nr_atoms,
 			submit->stride, false);
@@ -568,6 +579,14 @@ static int kbase_api_get_gpuprops(struct kbase_context *kctx,
 
 static int kbase_api_post_term(struct kbase_context *kctx)
 {
+#ifdef CONFIG_TGX
+	if (kctx->tgx_ctx) {
+		tgx_mmu_dump(kctx->tgx_ctx, kctx);
+		tgx_dump_mc(kctx->tgx_ctx, TGX_AS_TYPE_COMPUTE_JOB);
+		tgx_print_as(kctx->tgx_ctx, 1);
+		tgx_dump_sync_as(kctx->tgx_ctx);
+	}
+#endif
 	kbase_event_close(kctx);
 	return 0;
 }
@@ -3746,7 +3765,12 @@ static int kbase_platform_device_remove(struct platform_device *pdev)
 
 /* Number of register accesses for the buffer that we allocate during
  * initialization time. The buffer size can be changed later via debugfs. */
+
+#ifdef JIN_DUMP_TRACE
+#define KBASEP_DEFAULT_REGISTER_HISTORY_SIZE ((u16)1 < 15)	// jin
+#else
 #define KBASEP_DEFAULT_REGISTER_HISTORY_SIZE ((u16)512)
+#endif // JIN_DUMP_TRACE
 
 static int kbase_platform_device_probe(struct platform_device *pdev)
 {
