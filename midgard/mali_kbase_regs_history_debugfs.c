@@ -36,6 +36,7 @@
 #define DEBUG_MESSAGE_SIZE 256
 #endif
 
+#ifdef JIN_DUMP_TRACE
 static const char *kbasep_trace_code_string[] = {
 	/* IMPORTANT: USE OF SPECIAL #INCLUDE OF NON-STANDARD HEADER FILE
 	 * THIS MUST BE USED AT THE START OF THE ARRAY */
@@ -43,6 +44,8 @@ static const char *kbasep_trace_code_string[] = {
 //#include "tl/mali_kbase_trace_defs.h"
 #undef  KBASE_TRACE_CODE_MAKE_CODE
 };
+
+#endif	// JIN_DUMP_TRACE
 
 #endif	// KBASE_TRACE_ENABLE
 

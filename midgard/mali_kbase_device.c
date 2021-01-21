@@ -451,11 +451,15 @@ void kbasep_trace_add(struct kbase_device *kbdev, enum kbase_trace_code code, vo
 	unsigned long irqflags;
 	struct kbase_trace *trace_msg;
 
+	printk("jin:kbaspe_trace_add in\n");
 	spin_lock_irqsave(&kbdev->trace_lock, irqflags);
+	printk("1\n");
 
 	// jin: buffer size is KBASE_TRACE_SIZE (256 entries)
 	trace_msg = &kbdev->trace_rbuf[kbdev->trace_next_in];
+	printk("2\n");
 
+	// FIXME problem comes here, invalid memory access
 	/* Fill the message */
 	trace_msg->thread_id = task_pid_nr(current);
 	trace_msg->cpu = task_cpu(current);
