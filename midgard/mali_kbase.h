@@ -100,6 +100,9 @@ const struct list_head *kbase_dev_list_get(void);
 /* API to release the device list semaphore */
 void kbase_dev_list_put(const struct list_head *dev_list);
 
+#ifdef KBASE_TRACE_ENABLE
+int jin_trace_init(struct kbase_device *kbdev);
+#endif
 int kbase_device_init(struct kbase_device * const kbdev);
 void kbase_device_term(struct kbase_device *kbdev);
 void kbase_device_free(struct kbase_device *kbdev);

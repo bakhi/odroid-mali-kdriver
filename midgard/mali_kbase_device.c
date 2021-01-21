@@ -224,9 +224,11 @@ int kbase_device_init(struct kbase_device * const kbdev)
 
 	spin_lock_init(&kbdev->hwcnt.lock);
 
+#ifndef KBASE_TRACE_ENABLE	// added by jin 01/21/2021
 	err = kbasep_trace_init(kbdev);
 	if (err)
 		goto term_as;
+#endif
 
 	mutex_init(&kbdev->cacheclean_lock);
 
@@ -262,8 +264,10 @@ int kbase_device_init(struct kbase_device * const kbdev)
 	return 0;
 term_trace:
 	kbasep_trace_term(kbdev);
+#ifndef KBASE_TRACE_ENABLE	// added by jin 01/21/2021
 term_as:
 	kbase_device_all_as_term(kbdev);
+#endif
 as_init_failed:
 dma_set_mask_failed:
 fail:
@@ -380,6 +384,16 @@ void kbase_device_trace_register_access(struct kbase_context *kctx, enum kbase_r
  */
 #if KBASE_TRACE_ENABLE
 
+int jin_trace_init(struct kbase_device *kbdev) {
+	int err;
+	err = kbasep_trace_init(kbdev);
+	if (err)
+		goto term_as;
+term_as:
+	kbase_device_all_as_term(kbdev);
+	return err;
+}
+
 static int kbasep_trace_init(struct kbase_device *kbdev)
 {
 	struct kbase_trace *rbuf;
@@ -451,13 +465,10 @@ void kbasep_trace_add(struct kbase_device *kbdev, enum kbase_trace_code code, vo
 	unsigned long irqflags;
 	struct kbase_trace *trace_msg;
 
-	printk("jin:kbaspe_trace_add in\n");
 	spin_lock_irqsave(&kbdev->trace_lock, irqflags);
-	printk("1\n");
 
 	// jin: buffer size is KBASE_TRACE_SIZE (256 entries)
 	trace_msg = &kbdev->trace_rbuf[kbdev->trace_next_in];
-	printk("2\n");
 
 	// FIXME problem comes here, invalid memory access
 	/* Fill the message */

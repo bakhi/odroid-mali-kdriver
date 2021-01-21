@@ -1656,10 +1656,6 @@ int kbase_mmu_init(struct kbase_context *kctx)
 	if (NULL == kctx->mmu_teardown_pages)
 		return -ENOMEM;
 
-#ifdef CONFIG_TGX
-	kctx->tgx_ctx->tmmu.pgd = kctx->pgd;
-#endif // CONFIG_TGX
-
 	return 0;
 }
 

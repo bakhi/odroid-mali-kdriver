@@ -32,6 +32,10 @@
 #include <mali_kbase_dma_fence.h>
 #include <mali_kbase_ctx_sched.h>
 
+#ifdef CONFIG_TGX
+#include "tgx/tgx_defs.h"
+#endif
+
 struct kbase_context *
 kbase_create_context(struct kbase_device *kbdev, bool is_compat)
 {
@@ -123,6 +127,10 @@ kbase_create_context(struct kbase_device *kbdev, bool is_compat)
 	if (err)
 		goto term_dma_fence;
 
+#ifdef CONFIG_TGX
+	tgx_context_init(kctx);
+#endif
+\
 	do {
 		err = kbase_mem_pool_grow(&kctx->mem_pool,
 				MIDGARD_MMU_BOTTOMLEVEL);
@@ -133,6 +141,10 @@ kbase_create_context(struct kbase_device *kbdev, bool is_compat)
 		kctx->pgd = kbase_mmu_alloc_pgd(kctx);
 		mutex_unlock(&kctx->mmu_lock);
 	} while (!kctx->pgd);
+
+#ifdef CONFIG_TGX
+	kctx->tgx_ctx->tmmu.pgd = kctx->pgd;
+#endif
 
 	p = kbase_mem_alloc_page(&kctx->mem_pool);
 	if (!p)

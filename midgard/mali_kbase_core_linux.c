@@ -3833,6 +3833,16 @@ static int kbase_platform_device_probe(struct platform_device *pdev)
 	}
 	kbdev->inited_subsys |= inited_io_history;
 
+#ifdef KBASE_TRACE_ENABLE	// added by jin 01/21/2021
+	/* trace buf should be initialized before GPU power on, which generates trace */
+	err = jin_trace_init(kbdev);
+	if (err) {
+		dev_err(kbdev->dev, "trace init failed\n");
+		kbase_platform_device_remove(pdev);
+		return err;
+	}
+#endif
+
 	err = kbase_backend_early_init(kbdev);
 	if (err) {
 		dev_err(kbdev->dev, "Early backend initialization failed\n");
