@@ -84,7 +84,11 @@ out_err:
 
 int kbase_io_history_init(struct kbase_io_history *h, u16 n)
 {
+#ifdef JIN	// jin: true as default
+	h->enabled = true;
+#else
 	h->enabled = false;
+#endif
 	spin_lock_init(&h->lock);
 	h->count = 0;
 	h->size = 0;
