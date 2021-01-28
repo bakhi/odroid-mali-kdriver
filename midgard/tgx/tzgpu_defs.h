@@ -6,6 +6,10 @@
 #include "jin/log.h"
 #include "jin/measure.h"
 
+#ifndef ODROID
+#define ODROID
+#endif
+
 #ifndef CONFIG_TGX
 #define CONFIG_TGX
 #endif

@@ -188,8 +188,16 @@ void kbase_reg_write(struct kbase_device *kbdev, u16 offset, u32 value,
 
 #ifdef CONFIG_DEBUG_FS
 	if (unlikely(kbdev->io_history.enabled))
+#ifdef JIN
+	{
+		void *reg = 0;
+		kbase_io_history_add(&kbdev->io_history, reg + offset,	// jin: print just reg offset
+				value, 1);
+	}
+#else
 		kbase_io_history_add(&kbdev->io_history, kbdev->reg + offset,
 				value, 1);
+#endif
 #endif /* CONFIG_DEBUG_FS */
 	dev_dbg(kbdev->dev, "w: reg %04x val %08x", offset, value);
 
@@ -212,8 +220,16 @@ u32 kbase_reg_read(struct kbase_device *kbdev, u16 offset,
 
 #ifdef CONFIG_DEBUG_FS
 	if (unlikely(kbdev->io_history.enabled))
+#ifdef JIN
+	{
+		void *reg = 0;
+		kbase_io_history_add(&kbdev->io_history, reg + offset,	// jin: print just reg offset
+				val, 0);
+	}
+#else
 		kbase_io_history_add(&kbdev->io_history, kbdev->reg + offset,
 				val, 0);
+#endif
 #endif /* CONFIG_DEBUG_FS */
 	dev_dbg(kbdev->dev, "r: reg %04x val %08x", offset, val);
 

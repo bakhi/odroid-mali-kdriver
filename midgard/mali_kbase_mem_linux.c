@@ -1505,6 +1505,7 @@ static int kbase_cpu_vm_fault(struct vm_fault *vmf)
 #ifdef CONFIG_TGX
 	struct tgx_context *tgx_ctx = map->kctx->tgx_ctx;
 #endif
+	EE("[jin] vm fault");
 
 	KBASE_DEBUG_ASSERT(map);
 	KBASE_DEBUG_ASSERT(map->count > 0);
@@ -1523,8 +1524,10 @@ static int kbase_cpu_vm_fault(struct vm_fault *vmf)
 
 #ifdef CONFIG_TGX
 	if (tgx_ctx) {
-//      EE("kctx : %p, tgx_ctx : %p", (void *)map->kctx, (void *)tgx_ctx);
+		EE("------------- kctx : %p, tgx_ctx : %p", (void *)map->kctx, (void *)tgx_ctx);
 		tgx_as_add_valid(tgx_ctx, vma, map->alloc->nents);
+	} else {
+		EE("------------- no tgx_ctx");
 	}
 #endif
 
@@ -1566,6 +1569,7 @@ static int kbase_cpu_mmap(struct kbase_va_region *reg, struct vm_area_struct *vm
 	int err = 0;
 	int i;
 
+	EE("cpu_mmap");
 	map = kzalloc(sizeof(*map), GFP_KERNEL);
 
 	if (!map) {
@@ -1894,6 +1898,7 @@ int kbase_mmap(struct file *file, struct vm_area_struct *vma)
 #endif
 
 	dev_dbg(dev, "kbase_mmap\n");
+	EE("kbase_mmap");
 
 	if (!(vma->vm_flags & VM_READ))
 		vma->vm_flags &= ~VM_MAYREAD;

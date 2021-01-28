@@ -601,6 +601,7 @@ static int kbase_api_mem_alloc(struct kbase_context *kctx,
 	if ((!kbase_ctx_flag(kctx, KCTX_COMPAT)) &&
 			kbase_ctx_flag(kctx, KCTX_FORCE_SAME_VA)) {
 		/* force SAME_VA if a 64-bit client */
+		WW("force SMAE VA if a 64-bit client");
 		flags |= BASE_MEM_SAME_VA;
 	}
 
@@ -3767,7 +3768,7 @@ static int kbase_platform_device_remove(struct platform_device *pdev)
  * initialization time. The buffer size can be changed later via debugfs. */
 
 #ifdef JIN_DUMP_TRACE
-#define KBASEP_DEFAULT_REGISTER_HISTORY_SIZE ((u16)1 < 15)	// jin
+#define KBASEP_DEFAULT_REGISTER_HISTORY_SIZE ((u16)1 << 15)	// jin
 #else
 #define KBASEP_DEFAULT_REGISTER_HISTORY_SIZE ((u16)512)
 #endif // JIN_DUMP_TRACE

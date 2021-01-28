@@ -10,6 +10,8 @@
 
 #include <linux/delay.h>
 
+#define FILE_PATH	"/home/xsel/"
+
 #ifdef CONFIG_TGX
 
 /** #include "jin/log.h" */
@@ -45,7 +47,7 @@ static int file_write(struct file *file, unsigned long long offset, void *data, 
 
 	// Since kernel version 4.14, vfs_write is no longer exported 
 	// https://stackoverflow.com/questions/53917041/unknown-symbol-vfs-write-err-2-in-kernel-module-in-kernel-4-20
-	/** ret = vfs_write(file, data, size, &offset); */
+//	ret = vfs_write(file, data, size, &offset);
 //	ret = kernel_write(file, data, size, &offset);
 	ret = kernel_write(file, data, size, offset);
 
@@ -81,11 +83,15 @@ int tgx_context_init(struct kbase_context *kctx)
 	tgx_ctx->as_cnt				= 0;
 
 	// jin: memory dump file open
-	tgx_ctx->mem_dump_file 			= file_open("/home/linaro/tgx_mem_contents", O_WRONLY | O_CREAT, 0644);
+	EE("--------------- mem_dump_file open --------------");
+	tgx_ctx->mem_dump_file 			= file_open(FILE_PATH "tgx_mem_contents", O_WRONLY | O_CREAT, 0644);
+	if (!tgx_ctx->mem_dump_file) {
+		dev_err(kctx->kbdev->dev, "mem_dump_file open error");
+	}
 	tgx_ctx->mem_dump_file_offset	= 0;
 
 	// jin: format = vm_start (u64), vm_end (u64), size (size_t)
-	tgx_ctx->sync_as_file 			= file_open("/home/linaro/tgx_sync_as", O_WRONLY | O_CREAT, 0644);
+	tgx_ctx->sync_as_file 			= file_open(FILE_PATH "tgx_sync_as", O_WRONLY | O_CREAT, 0644);
 	tgx_ctx->sync_as_file_offset 	= 0;
 	tgx_ctx->sync_as_cnt 			= 0;
 
@@ -247,7 +253,7 @@ int tgx_as_add(struct tgx_context *tgx_ctx, struct vm_area_struct *vma, struct k
 
 void tgx_print_reg_flags(unsigned int flags)
 {
-#if 0	// in: not supported from current version
+#if 1	// in: not supported from current version
 	switch (flags & KBASE_REG_ZONE_MASK) {
 		case KBASE_REG_ZONE_CUSTOM_VA:
 			printk(KERN_CONT "ZONE_CUSTOME_VA | ");
@@ -255,8 +261,11 @@ void tgx_print_reg_flags(unsigned int flags)
 		case KBASE_REG_ZONE_SAME_VA:
 			printk(KERN_CONT "ZONE_SAME_VA | ");
 			break;
-		case KBASE_REG_ZONE_EXEC_VA:
-			printk(KERN_CONT "ZONE_EXEC_VA | ");
+//		case KBASE_REG_ZONE_EXEC_VA:
+//			printk(KERN_CONT "ZONE_EXEC_VA | ");
+//			break;
+		case KBASE_REG_ZONE_EXEC:
+			printk(KERN_CONT "ZONE_EXEC | ");
 			break;
 		default:
 			break;
@@ -281,6 +290,7 @@ void tgx_print_reg_flags(unsigned int flags)
 		printk(KERN_CONT "CPU_CACHED | ");
 	if (flags & KBASE_REG_GPU_CACHED)
 		printk(KERN_CONT "GPU_CACHED | ");
+	printk(KERN_CONT "\n");
 }
 
 int tgx_print_as(struct tgx_context *tgx_ctx, int is_forced) {
@@ -511,7 +521,10 @@ void tgx_mmu_dump(struct tgx_context *tgx_ctx, struct kbase_context *kctx) {
 		/** } */
 
 		// open file to dump page table
-		file = file_open("/home/linaro/tgx_pgt", O_WRONLY | O_CREAT, 0644);
+		file = file_open(FILE_PATH "tgx_pgt", O_WRONLY | O_CREAT, 0644);
+		if (!file) {
+			dev_err(kctx->kbdev->dev, "tgx_pgt file open error");
+		}
 
 		file_write(file, 0, buffer, dump_size);
 
@@ -616,6 +629,7 @@ int tgx_dump_phys_pages(struct kbase_context *kctx, struct file *file, u64 *offs
 			dma_sync_single_for_device(kctx->kbdev->dev, dma_addr, PAGE_SIZE, DMA_BIDIRECTIONAL);
 			/** dma_sync_single_for_cpu(kctx->kbdev->dev, dma_addr, PAGE_SIZE, DMA_BIDIRECTIONAL); */
 		} else {
+			EE("cpu_alloc != gpu_alloc");
 			/** TODO: handle cpu_pa != gpu_pa */
 		}
 
@@ -633,6 +647,7 @@ int tgx_dump_phys_pages(struct kbase_context *kctx, struct file *file, u64 *offs
 		*offset += PAGE_SIZE;
 
 		/** if (tas->nents != 513 && tas->nents != 64) { */
+		#if 0
 		if (tas->nents == 1 || tas->as_num == 0) {
 			if(is_mapped == 1) {
 				EE("----------- buffer (%lln) ------------ ", buffer);
@@ -645,6 +660,7 @@ int tgx_dump_phys_pages(struct kbase_context *kctx, struct file *file, u64 *offs
 				/** hex_dump((void *) mapped_page, 4096); */
 			}
 		}
+		#endif
 
 		kunmap(p);
 	}
@@ -688,7 +704,7 @@ int tgx_dump_phys_pages(struct kbase_context *kctx, struct file *file, u64 *offs
 }
 
 void tgx_mem_file_open(struct tgx_context *tctx) {
-	tctx->mem_dump_file = file_open("/home/linaro/tgx_mem_contents", O_WRONLY | O_CREAT, 0644);
+	tctx->mem_dump_file = file_open(FILE_PATH "tgx_mem_contents", O_WRONLY | O_CREAT, 0644);
 	tctx->mem_dump_file_offset = 0;
 	/** WW("file open is done. offset = %llu", tctx->mem_dump_file_offset); */
 }
@@ -721,6 +737,10 @@ void tgx_dump_sync_as(struct tgx_context *tctx) {
 static void _tgx_dump_mc(struct tgx_context *tctx, struct tgx_as *tas) {
 	struct file *file = tctx->mem_dump_file;
 	u64 *offset = &tctx->mem_dump_file_offset;
+
+#ifdef ODROID
+	tas->is_valid = 1;
+#endif
 
 	file_write(file, *offset, &tas->vm_start, sizeof(u64));
 	*offset += sizeof(u64);
