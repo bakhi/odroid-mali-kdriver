@@ -135,6 +135,7 @@ bool kbase_js_choose_affinity(u64 * const affinity,
 	} else {
 		if ((core_req & (BASE_JD_REQ_COHERENT_GROUP |
 					BASE_JD_REQ_SPECIFIC_COHERENT_GROUP))) {
+			// jin: entered here
 			if (js == 0 || num_core_groups == 1) {
 				/* js[0] and single-core-group systems just get
 				 * the first core group */
@@ -142,6 +143,11 @@ bool kbase_js_choose_affinity(u64 * const affinity,
 				kbdev->gpu_props.props.coherency_info.group[0].core_mask
 						& core_availability_mask &
 						kbdev->pm.debug_core_mask[js];
+   /**              EE("[0] core_mask: %llx, core_availability_mask: %llx, debug_core_mask: %llx, affinity: %lln", */
+					/** kbdev->gpu_props.props.coherency_info.group[0].core_mask, */
+					/**     core_availability_mask, */
+					/**     kbdev->pm.debug_core_mask[js], */
+						/** affinity); */
 			} else {
 				/* js[1], js[2] use core groups 0, 1 for
 				 * dual-core-group systems */

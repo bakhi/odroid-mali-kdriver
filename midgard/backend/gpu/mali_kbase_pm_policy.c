@@ -303,7 +303,9 @@ int kbase_pm_policy_init(struct kbase_device *kbdev)
 			CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	kbdev->pm.backend.gpu_poweroff_timer.function =
 			kbasep_pm_do_gpu_poweroff_callback;
-	kbdev->pm.backend.pm_current_policy = policy_list[0];
+//	kbdev->pm.backend.pm_current_policy = policy_list[0];
+	kbdev->pm.backend.pm_current_policy = policy_list[1];	// jin: pm "always_on"
+	EE("[CONFIG] pm policy: %s", kbdev->pm.backend.pm_current_policy->name);
 	kbdev->pm.backend.pm_current_policy->init(kbdev);
 	kbdev->pm.gpu_poweroff_time =
 			HR_TIMER_DELAY_NSEC(DEFAULT_PM_GPU_POWEROFF_TICK_NS);
