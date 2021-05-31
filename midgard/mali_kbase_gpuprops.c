@@ -112,6 +112,8 @@ static void kbase_gpuprops_construct_coherent_groups(base_gpu_props * const prop
 		pr_warn("Too many coherent groups (keeping only %d groups).\n", BASE_MAX_COHERENT_GROUPS);
 
 	props->coherency_info.num_groups = num_groups;
+	EE("coherency_info.num_groups = %u", num_groups);
+	EE("coherency_info.num_core_groups = %u", props->coherency_info.num_core_groups);
 }
 
 /**
@@ -145,6 +147,7 @@ static void kbase_gpuprops_get_props(base_gpu_props * const gpu_props, struct kb
 	gpu_props->raw_props.shader_present =
 		((u64) regdump.shader_present_hi << 32) +
 		regdump.shader_present_lo;
+	EE("raw_props.shader_present : %llx", gpu_props->raw_props.shader_present);
 	gpu_props->raw_props.tiler_present =
 		((u64) regdump.tiler_present_hi << 32) +
 		regdump.tiler_present_lo;

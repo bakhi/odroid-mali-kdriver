@@ -10,7 +10,7 @@
 
 #include <linux/delay.h>
 
-#define FILE_PATH	"/home/xsel/"
+#define FILE_PATH	"/home/jin/"
 
 #ifdef CONFIG_TGX
 

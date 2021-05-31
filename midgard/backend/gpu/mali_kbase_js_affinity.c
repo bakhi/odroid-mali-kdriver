@@ -128,6 +128,9 @@ bool kbase_js_choose_affinity(u64 * const affinity,
 		return true;
 	}
 
+	EE("core_availability_mask : %llx", core_availability_mask);
+	EE("num_core_groups: %u", num_core_groups);
+	EE("gpu_props.num_cores = %d core_groups = %x", kbdev->gpu_props.num_cores, kbdev->gpu_props.num_core_groups);
 	if (1 == kbdev->gpu_props.num_cores) {
 		/* trivial case only one core, nothing to do */
 		*affinity = core_availability_mask &

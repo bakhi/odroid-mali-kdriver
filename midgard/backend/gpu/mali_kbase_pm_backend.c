@@ -359,6 +359,7 @@ int kbase_hwaccess_pm_powerup(struct kbase_device *kbdev,
 			kbdev->pm.debug_core_mask[1] =
 			kbdev->pm.debug_core_mask[2] =
 			kbdev->gpu_props.props.raw_props.shader_present;
+	EE("shader_present : %llx", kbdev->pm.debug_core_mask_all);
 
 	/* Pretend the GPU is active to prevent a power policy turning the GPU
 	 * cores off */
