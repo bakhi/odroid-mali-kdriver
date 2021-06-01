@@ -31,6 +31,11 @@
 #include "mali_clock.h"
 #include "meson_main2.h"
 
+
+#ifdef CONFIG_AMLOGIC_GPU_THERMAL	// jin
+    struct gpufreq_cooling_device *gcdev = NULL;
+#endif
+
 /*
  *    For Meson 8 M2.
  *
@@ -190,6 +195,10 @@ int mali_meson_init_finish(struct platform_device* ptr_plt_dev)
 
 int mali_meson_uninit(struct platform_device* ptr_plt_dev)
 {
+#ifdef CONFIG_AMLOGIC_GPU_THERMAL
+	printk("jin: gpufreq_cooling_unregister");
+    gpufreq_cooling_unregister(gcdev->cool_dev);
+#endif
     mali_core_scaling_term();
     return 0;
 }
@@ -198,7 +207,7 @@ void mali_post_init(void)
 {
 #ifdef CONFIG_AMLOGIC_GPU_THERMAL
     int err;
-    struct gpufreq_cooling_device *gcdev = NULL;
+    /** struct gpufreq_cooling_device *gcdev = NULL; */	//jin
     struct gpucore_cooling_device *gccdev = NULL;
 
     gcdev = gpufreq_cooling_alloc();
